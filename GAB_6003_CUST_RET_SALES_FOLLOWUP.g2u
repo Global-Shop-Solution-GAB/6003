@@ -1,0 +1,951 @@
+﻿Program.Sub.ScreenSU.Start
+Gui.F_SADash..Create(BaseForm)
+Gui.F_SADash..Caption("Customers Retention and Sales Follow Up")
+Gui.F_SADash..Size(20355,10665)
+Gui.F_SADash..MinX(0)
+Gui.F_SADash..MinY(0)
+Gui.F_SADash..Position(0,0)
+Gui.F_SADash..FontSize(9)
+Gui.F_SADash..BackColor(-2147483633)
+Gui.F_SADash..MousePointer(0)
+Gui.F_SADash..Event(UnLoad,Unload)
+Gui.F_SADash..AlwaysOnTop(False)
+Gui.F_SADash..FontName("Tahoma")
+Gui.F_SADash..ControlBox(True)
+Gui.F_SADash..MaxButton(True)
+Gui.F_SADash..MinButton(True)
+Gui.F_SADash..Moveable(True)
+Gui.F_SADash..Sizeable(True)
+Gui.F_SADash..ShowInTaskBar(True)
+Gui.F_SADash..TitleBar(True)
+Gui.F_SADash.cmdRefresh.Create(Button)
+Gui.F_SADash.cmdRefresh.Size(1185,540)
+Gui.F_SADash.cmdRefresh.Position(4695,195)
+Gui.F_SADash.cmdRefresh.Caption("REFRESH")
+Gui.F_SADash.cmdRefresh.FontSize(9)
+Gui.F_SADash.cmdRefresh.Event(Click,RefreshScreen)
+Gui.F_SADash.cmdRefresh.Enabled(True)
+Gui.F_SADash.cmdRefresh.Visible(True)
+Gui.F_SADash.cmdRefresh.Zorder(0)
+Gui.F_SADash.cmdRefresh.FontName("Tahoma")
+Gui.F_SADash.tab1.Create(Tab)
+Gui.F_SADash.tab1.Size(20025,8880)
+Gui.F_SADash.tab1.Position(90,1200)
+Gui.F_SADash.tab1.FontSize(9)
+Gui.F_SADash.tab1.Enabled(True)
+Gui.F_SADash.tab1.Visible(True)
+Gui.F_SADash.tab1.Zorder(0)
+Gui.F_SADash.tab1.FontName("Tahoma")
+Gui.F_SADash.tab1.Tabs(2)
+Gui.F_SADash.tab1.SetTab(0)
+Gui.F_SADash.tab1.Caption("Customers Retention")
+Gui.F_SADash.tab1.SetTab(1)
+Gui.F_SADash.tab1.Caption("Sales Follow Up")
+Gui.F_SADash.GsGCFollowUp.Create(GsGridControl)
+Gui.F_SADash.GsGCFollowUp.Size(19755,8130)
+Gui.F_SADash.GsGCFollowUp.Position(75,165)
+Gui.F_SADash.GsGCFollowUp.Parent("tab1",1)
+Gui.F_SADash.GsGCFollowUp.Enabled(True)
+Gui.F_SADash.GsGCFollowUp.Visible(True)
+Gui.F_SADash.GsGCFollowUp.Zorder(0)
+Gui.F_SADash.GsGCCustRet.Create(GsGridControl)
+Gui.F_SADash.GsGCCustRet.Size(19755,8145)
+Gui.F_SADash.GsGCCustRet.Position(75,120)
+Gui.F_SADash.GsGCCustRet.Parent("tab1",0)
+Gui.F_SADash.GsGCCustRet.Enabled(True)
+Gui.F_SADash.GsGCCustRet.Visible(True)
+Gui.F_SADash.GsGCCustRet.Zorder(0)
+Gui.F_SADash.lblNotification.Create(Label,"Label",True,2340,255,0,4725,840,True,0,"Arial",10,-2147483633,0,0)
+Gui.F_SADash.lblNotification.FontStyle(True,False,False,False,False)
+Gui.F_SADash.lblNotification.BorderStyle(0)
+Gui.F_SADash.picGSSLogo.Create(PictureBox)
+Gui.F_SADash.picGSSLogo.Size(4125,960)
+Gui.F_SADash.picGSSLogo.Position(120,135)
+Gui.F_SADash.picGSSLogo.Enabled(True)
+Gui.F_SADash.picGSSLogo.Visible(True)
+Gui.F_SADash.picGSSLogo.Zorder(0)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+V.Global.fMinHeight.Declare(Float,10665)
+V.Global.fMinWidth.Declare(Float,20355)
+V.Global.fRefHeight.Declare
+V.Global.fRefWidth.Declare
+V.Global.iYear.Declare
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+V.Local.sGSSLogo.Declare
+V.Local.sIconPath.Declare
+V.Local.sSQL.Declare
+
+F.Intrinsic.String.Build("{0}\GAB\GAS\gss2.ico",V.Caller.PluginsDir,v.Local.sIconPath)
+Gui.F_SADash..Icon(V.Local.sIconPath)
+F.Intrinsic.String.Concat(V.Caller.PluginsDir,"\GAB\GAS\GAB_GSS_Logo_Green_Dash.png",V.Local.sGSSLogo)
+Gui.F_SADash.picGSSLogo.Picture(V.Local.sGSSLogo)
+
+F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass,300000)
+
+F.Intrinsic.String.Build("* Amounts in {0}",V.Company.CurrencyCode,V.Local.sIconPath)
+Gui.F_SADash.lblNotification.Caption(V.Local.sIconPath)
+
+V.Local.sSQL.Set("select distinct(year(date_invoice)) as 'Year', year(date_invoice) as 'Value' from v_order_hist_head order by date_invoice desc")
+F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,True)
+	F.Intrinsic.UI.Msgbox("No invoice has been updated to AR","Customers Retention and Sales Follow")
+	F.ODBC.conx!rst.Close
+	F.Intrinsic.Control.CallSub(unload)
+F.Intrinsic.Control.EndIf
+F.Data.Dictionary.CreateFromSQL("Year","Conx",V.Local.sSQL)
+'Gui.F_SADash.ddlYear.AddItems("Dictionary","Year")
+F.Data.Dictionary.Close("Year")
+'Gui.F_SADash.ddlYear.Text(V.ODBC.conx!rst.FieldValLong!Year)
+V.Global.iYear.Set(V.ODBC.conx!rst.FieldValLong!Year)
+F.ODBC.conx!rst.Close
+F.Intrinsic.Control.CallSub(refreshscreen)
+F.Intrinsic.Control.CallSub(SetContextMenus)
+Gui.F_SADash.tab1.SetTab(0)
+V.Global.fRefHeight.Set(V.Global.fMinHeight)
+V.Global.fRefWidth.Set(V.Global.fMinWidth)
+Gui.F_SADash..Size(V.Global.fMinWidth,V.Global.fMinHeight)
+Gui.F_SADash.GsGCFollowUp.Anchor(15)
+Gui.F_SADash.GsGCCustRet.Anchor(15)
+
+Gui.F_SADash..Show
+Gui.F_SADash.tab1.Anchor(15)
+Program.Sub.Main.End
+
+Program.Sub.Unload.Start
+F.Intrinsic.Control.If(V.DataTable.dtOrderHead.Exists,=,True)
+	F.Data.DataView.Close("dtOrderHead","dvOrderHead")
+	F.Data.DataTable.Close("dtOrderHead")
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.If(V.DataTable.dtSP.Exists,=,True)
+	F.Data.DataTable.Close("dtSP")
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.If(V.DataTable.dtCust.Exists,=,True)
+	F.Data.DataTable.Close("dtCust")
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Connection!conx.Close
+F.Intrinsic.Control.End
+
+Program.Sub.Unload.End
+
+Program.Sub.SetContextMenus.Start
+	F.Intrinsic.Control.Try
+	V.Local.sError.Declare
+
+	Gui.F_SADash..ContextMenuCreate("CTXCR")
+	Gui.F_SADash.GsGCCustRet.ContextMenuAttach("CTXCR")
+	Gui.F_SADash..ContextMenuAddItem("CTXCR","Refresh",0,"Refresh")
+	Gui.F_SADash..ContextMenuAddItem("CTXCR","Export",0,"Export")
+'	Gui.F_SADash..ContextMenuAddItem("CTXCR","ResetColumns",0,"Reset Columns")
+	Gui.F_SADash..ContextMenuSetItemEventHandler("CTXCR","Refresh","RefreshScreen")
+	Gui.F_SADash..ContextMenuSetItemEventHandler("CTXCR","Export","MenuClickExport")
+'	Gui.F_SADash..ContextMenuSetItemEventHandler("CTXCR","ResetColumns","MenuClickResetColumns")
+
+	Gui.F_SADash..ContextMenuCreate("CTXFU")
+	Gui.F_SADash.GsGCFollowUp.ContextMenuAttach("CTXFU")
+	Gui.F_SADash..ContextMenuAddItem("CTXFU","Refresh",0,"Refresh")
+	Gui.F_SADash..ContextMenuAddItem("CTXFU","Export",0,"Export")
+'	Gui.F_SADash..ContextMenuAddItem("CTXFU","ResetColumns",0,"Reset Columns")
+	Gui.F_SADash..ContextMenuSetItemEventHandler("CTXFU","Refresh","RefreshScreen")
+	Gui.F_SADash..ContextMenuSetItemEventHandler("CTXFU","Export","MenuClickExport")
+'	Gui.F_SADash..ContextMenuSetItemEventHandler("CTXFU","ResetColumns","MenuClickResetColumns")
+	
+	F.Intrinsic.Control.Catch
+		F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.End 
+	F.Intrinsic.Control.EndTry
+Program.Sub.SetContextMenus.End
+
+Program.Sub.RefreshScreen.Start
+F.Intrinsic.UI.InvokeWaitDialog("Initializing dashboard data","Customers Retention and Sales Follow Up")
+
+Gui.F_SADash.ddlYear.Enabled(False)
+Gui.F_SADash.cmdRefresh.Enabled(False)
+Gui.F_SADash.tab1.Visible(False)
+F.Intrinsic.Control.CallSub(loadGsGCCustRet)
+F.Intrinsic.Control.CallSub(loadGsGCFollowUp)
+'Gui.F_SADash.gsChartSP.ClearChart()
+'Gui.F_SADash.gsChartPart.ClearChart()
+Gui.F_SADash.tab1.Visible(True)
+Gui.F_SADash.cmdRefresh.Enabled(True)
+Gui.F_SADash.ddlYear.Enabled(True)
+
+F.Intrinsic.UI.CloseWaitDialog
+Program.Sub.RefreshScreen.End
+
+Program.Sub.MenuClickExport.Start
+	F.Intrinsic.Control.Try
+	V.Local.sError.Declare
+
+	V.Local.sFileExport.Declare
+	V.Local.bExcel.Declare
+	V.Local.bFileLocked.Declare
+	V.Local.sMsg.Declare
+	V.Local.sControl.Declare
+
+	F.Intrinsic.Control.SelectCase(V.Args.MenuName)
+		F.Intrinsic.Control.Case("CTXCR")
+			V.Local.sControl.Set("GsGCCUSTRET")
+		F.Intrinsic.Control.Case("CTXFU")
+			V.Local.sControl.Set("GsGCFOLLOWUP")
+	F.Intrinsic.Control.EndSelect
+	
+		F.Automation.MSExcel.CheckPresence(V.Local.bExcel)
+		F.Intrinsic.Control.If(V.Local.bExcel)
+			F.Intrinsic.String.Build("{0}\GAB_6003_{1}_Export.xlsx",V.Caller.LocalGssTempDir,V.Local.sControl,V.Local.sFileExport)
+			F.Intrinsic.File.IsFileLocked(V.Local.sFileExport,V.Local.bFileLocked)
+			F.Intrinsic.Control.If(V.Local.bFileLocked)
+				F.Intrinsic.String.Build("File is already open. Please close and export again.{0}File: {1}",V.Ambient.NewLine,V.Local.sFileExport,V.Local.sMsg)
+				F.Intrinsic.UI.Msgbox(V.Local.sMsg,"File In Use")
+			F.Intrinsic.Control.Else
+				Gui.F_SADash.[V.Local.sControl].Export(V.Local.sFileExport,"xlsx")
+				F.Intrinsic.Task.ShellExec(0,"",V.Local.sFileExport,"","",1)
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.Else
+			F.Intrinsic.String.Build("{0}\GAB_6003_{1}_Export.csv",V.Caller.LocalGssTempDir,V.Local.sControl,V.Local.sFileExport)
+			F.Intrinsic.File.IsFileLocked(V.Local.sFileExport,V.Local.bFileLocked)
+			F.Intrinsic.Control.If(V.Local.bFileLocked)
+				F.Intrinsic.String.Build("File is already open. Please close and export again.{0}File: {1}",V.Ambient.NewLine,V.Local.sFileExport,V.Local.sMsg)
+				F.Intrinsic.UI.Msgbox(V.Local.sMsg,"File In Use")
+			F.Intrinsic.Control.Else
+				Gui.F_SADash.[V.Local.sControl].Export(V.Local.sFileExport,"csv")
+			F.Intrinsic.Control.EndIf
+			F.Intrinsic.Task.ShellExec(0,"",V.Local.sFileExport,"","",1)
+		F.Intrinsic.Control.EndIf
+		
+	F.Intrinsic.Control.Catch
+		F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.End 
+	F.Intrinsic.Control.EndTry
+Program.Sub.MenuClickExport.End
+
+'Program.Sub.GsGCCustRet_CellClick.Start
+'V.Local.fSum.Declare
+'V.Local.i1.Declare
+'V.Local.i2.Declare
+'V.Local.sArgument.Declare
+'V.Local.sFieldName.Declare
+'V.Local.sFilter.Declare(String,"")
+'V.Local.sLegend.Declare(String,"")
+'V.Local.sMonths.Declare
+'V.Local.sName.Declare
+'V.Local.sSeries.Declare(String,"")
+'V.Local.sTitle.Declare
+'V.Local.sValues.Declare(String,"")
+
+'F.Intrinsic.String.Split("January*!*February*!*March*!*April*!*May*!*June*!*July*!*August*!*September*!*October*!*November*!*December","*!*",V.Local.sMonths)
+
+'F.Intrinsic.Control.If(V.Args.Column,=,"Salesperson")
+'	F.Intrinsic.String.Build("SP = '{0}'",V.DataTable.dtOrderHead(V.Args.RowIndex).SP!FieldValTrim,V.Local.sFilter)
+'	V.Local.sName.Set(V.DataTable.dtOrderHead(V.Args.RowIndex).Salesperson!FieldValTrim)
+'F.Intrinsic.Control.ElseIf(V.Args.Column,=,"Customer")
+'	F.Intrinsic.String.Build("CustID = '{0}'",V.DataTable.dtOrderHead(V.Args.RowIndex).CustID!FieldValTrim,V.Local.sFilter)
+'	V.Local.sName.Set(V.DataTable.dtOrderHead(V.Args.RowIndex).Customer!FieldValTrim)
+'F.Intrinsic.Control.EndIf
+
+'F.Intrinsic.Control.If(V.Local.sFilter.Trim,<>,"")
+	'Build the series based on filter for every month
+'	F.Intrinsic.Control.For(V.Local.i1,1,12,1)
+'		F.Intrinsic.Math.Sub(V.Local.i1,1,V.Local.i2)
+'		F.Intrinsic.String.Build("Month{0}",V.Local.i1,V.Local.sFieldName)
+'		F.Intrinsic.String.Build("SUM({0})",V.Local.sFieldName,V.Local.sArgument)
+'		F.Data.DataTable.Compute("dtOrderHead",V.Local.sArgument,V.Local.sFilter,V.Local.fSum)
+'		F.Intrinsic.Control.If(V.Local.sSeries.Trim,=,"")
+'			F.Intrinsic.String.Build("{0}*!*{1}",V.Local.sMonths(V.Local.i2).Trim,V.Local.fSum,V.Local.sSeries)
+'		F.Intrinsic.Control.Else
+'			F.Intrinsic.String.Build("{2}!*!{0}*!*{1}",V.Local.sMonths(V.Local.i2).Trim,V.Local.fSum,V.Local.sSeries,V.Local.sSeries)
+'		F.Intrinsic.Control.EndIf
+'	F.Intrinsic.Control.Next(V.Local.i1)
+
+'	Gui.F_SADash.gsChartSP.ClearChart()
+'	F.Intrinsic.Control.If(V.DataTable.dtOrderHead(V.Args.RowIndex).Salesperson!FieldValTrim,<>,"GRAND TOTAL")
+'		F.Intrinsic.String.Build("{0}: {1}",V.Args.Column,V.Local.sName,V.Local.sTitle)
+'	F.Intrinsic.Control.Else
+'		V.Local.sTitle.Set("GRAND TOTAL")
+'	F.Intrinsic.Control.EndIf
+'	Gui.F_SADash.gsChartSP.CreateVertBarChart(V.Local.sTitle,V.Local.sName,V.Local.sSeries,False)
+
+'	F.Data.DataTable.Compute("dtOrderHead","SUM(Total)",V.Local.sFilter,V.Local.fSum)
+'	F.Intrinsic.String.Format(V.Local.fSum,"#,0.00",V.Local.sTitle)
+'	Gui.F_SADash.txtSPTotal.Text(V.Local.sTitle)
+'F.Intrinsic.Control.EndIf
+'Program.Sub.GsGCCustRet_CellClick.End
+
+'Program.Sub.ResizeScreen.Start
+'V.Local.fH.Declare
+'V.Local.fdX.Declare
+'V.Local.fdY.Declare
+'V.Local.fNewHeight.Declare
+'V.Local.fNewWidth.Declare
+'V.Local.fNewX.Declare
+'V.Local.fNewY.Declare
+'Limit minimum screen size
+'F.Intrinsic.Control.If(V.Screen.F_SADash.Width,<,V.Global.fMinWidth)
+'F.Intrinsic.Control.Andif(V.Screen.F_SADash.Height,<,V.Global.fMinHeight)
+'	Gui.F_SADash..Size(V.Global.fMinWidth,V.Global.fMinHeight)
+'F.Intrinsic.Control.Else
+'	F.Intrinsic.Control.If(V.Screen.F_SADash.Width,<,V.Global.fMinWidth)
+'		Gui.F_SADash..Size(V.Global.fMinWidth,V.Screen.F_SADash.Height)
+'	F.Intrinsic.Control.ElseIf(V.Screen.F_SADash.Height,<,V.Global.fMinHeight)
+'		Gui.F_SADash..Size(V.Screen.F_SADash.Width,V.Global.fMinHeight)
+'	F.Intrinsic.Control.EndIf
+'F.Intrinsic.Control.EndIf
+
+'Get the ratio of screen size change
+'F.Intrinsic.Math.Div(V.Screen.F_SADash.Width,V.Global.fRefWidth,V.Local.fdX)
+'F.Intrinsic.Math.div(V.Screen.F_SADash.Height,V.Global.fRefHeight,V.Local.fdY)
+'Get tab1 new width and height 
+'F.Intrinsic.Math.Mult(V.Screen.F_SADash!tab1.Width,V.Local.fdX,V.Local.fNewWidth)
+'F.Intrinsic.Math.Mult(V.Screen.F_SADash!tab1.Height,V.Local.fdY,V.Local.fNewHeight)
+'Gui.F_SADash.tab1.Size(V.Local.fNewWidth,V.Local.fNewHeight)
+'Get GsCCSP new width and height (reference)
+'F.Intrinsic.Math.Mult(V.Screen.F_SADash!GsGCSP.Width,V.Local.fdX,V.Local.fNewWidth)
+'F.Intrinsic.Math.Mult(V.Screen.F_SADash!GsGCSP.Height,V.Local.fdY,V.Local.fNewHeight)
+'Calculate how big GsGCBOM height change
+'F.Intrinsic.Math.Sub(V.Local.fNewHeight,V.Screen.F_SADash!GsGCSP.Height,V.Local.fH)
+'Gui.F_SADash.GsGCSP.Size(V.Local.fNewWidth,V.Local.fNewHeight)
+'F.Intrinsic.Math.Add(V.Screen.F_SADash!gsChartSP.Top,V.Local.fH,V.Local.fNewY)
+'Gui.F_SADash.gsChartSP.CurrentY(V.Local.fNewY)
+'Get gsChartSP new width and height 
+'F.Intrinsic.Math.Mult(V.Screen.F_SADash!gsChartSP.Width,V.Local.fdX,V.Local.fNewWidth)
+'F.Intrinsic.Math.Mult(V.Screen.F_SADash!gsChartSP.Height,V.Local.fdY,V.Local.fNewHeight)
+'Gui.F_SADash.gsChartSP.Size(V.Local.fNewWidth,V.Local.fNewHeight)
+'Get GsGCFollowUp new width and height 
+'F.Intrinsic.Math.Mult(V.Screen.F_SADash!GsGCPart.Width,V.Local.fdX,V.Local.fNewWidth)
+'F.Intrinsic.Math.Mult(V.Screen.F_SADash!GsGCPart.Height,V.Local.fdY,V.Local.fNewHeight)
+'Gui.F_SADash.GsGCPart.Size(V.Local.fNewWidth,V.Local.fNewHeight)
+'F.Intrinsic.Math.Add(V.Screen.F_SADash!gsChartPart.Top,V.Local.fH,V.Local.fNewY)
+'Gui.F_SADash.gsChartPart.CurrentY(V.Local.fNewY)
+'Gui.F_SADash.gsChartPiePart.CurrentY(V.Local.fNewY)
+'Get gsChartSP new width and height 
+'F.Intrinsic.Math.Sub(V.Screen.F_SADash!tab1.Width,V.Screen.F_SADash!GsGCPart.Width,V.Screen.F_SADash!GsGCPart.Left,V.Local.fNewWidth)
+'F.Intrinsic.Math.Sub(V.Screen.F_SADash!tab1.Width,V.Screen.F_SADash!gsChartPart.Left,V.Local.fNewWidth,V.Local.fNewWidth)
+'F.Intrinsic.Math.Mult(V.Screen.F_SADash!gsChartPart.Height,V.Local.fdY,V.Local.fNewHeight)
+'Gui.F_SADash.gsChartPart.Size(V.Local.fNewWidth,V.Local.fNewHeight)
+'Gui.F_SADash.gsChartPiePart.Size(V.Screen.F_SADash!gsChartPiePart.Width,V.Local.fNewHeight)
+'V.Global.fRefHeight.Set(V.Screen.F_SADash.Height)
+'V.Global.fRefWidth.Set(V.Screen.F_SADash.Width)
+'Program.Sub.ResizeScreen.End
+
+Program.Sub.LoadGsGCCustRet.Start
+V.Local.fInvoice.Declare
+V.Local.fTotal.Declare
+V.Local.fTotalMonth.Declare
+V.Local.i1.Declare
+V.Local.i2.Declare
+V.Local.i3.Declare
+V.Local.i4.Declare
+V.Local.i5.Declare
+V.Local.iRow.Declare
+V.Local.iYear.Declare
+V.Local.sBuyGroup.Declare
+V.Local.sCountry.Declare
+V.Local.sCustomer.Declare
+V.Local.sFieldName.Declare
+V.Local.sFilter.Declare
+V.Local.sFQN.Declare
+V.Local.sMessage.Declare
+V.Local.sMonths.Declare
+V.Local.sPieTitle1.Declare(String,"")
+V.Local.sPieTitle2.Declare(String,"")
+V.Local.sPieValue1.Declare(String,"")
+V.Local.sPieValue2.Declare(String,"")
+V.Local.sRet.Declare
+V.Local.sRow.Declare
+V.Local.sSIC.Declare
+V.Local.sSPName.Declare
+V.Local.sSQL.Declare
+V.Local.iMonth.Declare
+
+'V.Global.iYear.Set(V.Screen.F_SADash!ddlYear.Text)
+F.Intrinsic.String.Split("January*!*February*!*March*!*April*!*May*!*June*!*July*!*August*!*September*!*October*!*November*!*December","*!*",V.Local.sMonths)
+
+F.Intrinsic.Control.If(V.DataTable.dtOrderHead$dtLine.Exists,=,True)
+	F.Data.DataView.Close("dtOrderHead$dtLine","dvOrderLine")
+	F.Data.DataTable.Close("dtOrderHead$dtLine")
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.If(V.DataTable.dtOrderHead.Exists,=,True)
+	F.Data.DataView.Close("dtOrderHead","dvOrderHead")
+	F.Data.DataTable.Close("dtOrderHead")
+F.Intrinsic.Control.EndIf
+
+'F.Intrinsic.String.Build("select distinct(rtrim(CUSTOMER)) as CUSTOMER from v_order_hist_head GROUP BY CUSTOMER",V.Global.iYear,V.Local.sSQL)
+F.Data.DataTable.CreateFromSQL("dtOrderHead","conx","Select Customer, RTrim(Name_Customer) AS NAME From V_Customer_Master;",true)
+'F.Data.DataTable.CreateFromSQL("dtOrderHead","Conx",V.Local.sSQL,True)
+'F.Data.DataTable.AddColumn("dtOrderHead","Name","String")
+F.Data.DataTable.AddColumn("dtOrderHead","Days","Float")
+F.Data.DataTable.AddColumn("dtOrderHead","CountYear","Float")
+F.Data.DataTable.AddColumn("dtOrderHead","AmountYear","Float")
+F.Data.DataTable.AddColumn("dtOrderHead","CountLastYear","Float")
+F.Data.DataTable.AddColumn("dtOrderHead","AmountLastYear","Float")
+F.Data.DataTable.AddColumn("dtOrderHead","CountAll","Float")
+F.Data.DataTable.AddColumn("dtOrderHead","AmountAll","Float")
+
+'Set Customer Name
+'F.Data.Dictionary.CreateFromSQL("dicCust","conx","Select Customer,RTrim(Name_Customer) AS NAME From V_Customer_Master UNION ALL SELECT PROSPECT AS CUSTOMER, NAME_PROSPECT AS NAME FROM V_PROSPECT_MASTER;")
+'F.Data.Dictionary.SetDefaultReturn("dicCust","")
+'F.Data.DataTable.FillFromDictionary("dtOrderHead","dicCust","Customer","Name")
+'F.Data.Dictionary.Close("dicCust")
+
+'Set # Days from last order
+F.Intrinsic.String.Build("Select A.CUSTOMER, '{0}' - MAX(A.DATE_ORDER) From (SELECT * FROM (Select CUSTOMER, ORDER_NO, DATE_ORDER From V_ORDER_HIST_HEAD UNION ALL SELECT CUSTOMER, ORDER_NO, DATE_ORDER FROM V_ORDER_HEADER UNION ALL SELECT CUSTOMER, ORDER_NO, DATE_ORDER FROM V_SHIPMENT_HEADER) A GROUP BY A.CUSTOMER, A.ORDER_NO, A.DATE_ORDER) A GROUP BY A.CUSTOMER;",V.Ambient.Date.PervasiveDate,V.Local.sSQL)
+F.Data.Dictionary.CreateFromSQL("dicCust","conx",V.Local.sSQL,True)
+F.Data.Dictionary.SetDefaultReturn("dicCust",0)
+F.Data.DataTable.FillFromDictionary("dtOrderHead","dicCust","Customer","Days")
+F.Data.Dictionary.Close("dicCust")
+
+'Set total orders in this year
+F.Intrinsic.String.Build("Select A.CUSTOMER, COUNT(A.ORDER_NO) From (SELECT * FROM (Select CUSTOMER, ORDER_NO, DATE_ORDER From V_ORDER_HIST_HEAD UNION ALL SELECT CUSTOMER, ORDER_NO, DATE_ORDER FROM V_ORDER_HEADER UNION ALL SELECT CUSTOMER, ORDER_NO, DATE_ORDER FROM V_SHIPMENT_HEADER) A GROUP BY A.CUSTOMER, A.ORDER_NO, A.DATE_ORDER) A WHERE YEAR(A.DATE_ORDER) = '{0}' GROUP BY A.CUSTOMER;",V.Global.iYear,V.Local.sSQL)
+F.Data.Dictionary.CreateFromSQL("dicCust","conx",V.Local.sSQL,True)
+F.Data.Dictionary.SetDefaultReturn("dicCust",0)
+F.Data.DataTable.FillFromDictionary("dtOrderHead","dicCust","Customer","CountYear")
+F.Data.Dictionary.Close("dicCust")
+
+'Set total amount in this year
+F.Intrinsic.String.Build("Select A.CUSTOMER, SUM(A.EXTENSION) From (Select CUSTOMER, EXTENSION, DATE_ORDER From V_ORDER_HIST_LINE UNION ALL SELECT CUSTOMER, (EXTENSION-(QTY_SHIPPED*PRICE)) AS EXTENSION, DATE_ORDER FROM V_ORDER_LINES UNION ALL SELECT CUSTOMER, EXTENSION, DATE_ORDER FROM V_SHIPMENT_LINES) A WHERE YEAR(A.DATE_ORDER) = '{0}' GROUP BY A.CUSTOMER;",V.Global.iYear,V.Local.sSQL)
+F.Data.Dictionary.CreateFromSQL("dicCust","conx",V.Local.sSQL,True)
+F.Data.Dictionary.SetDefaultReturn("dicCust",0)
+F.Data.DataTable.FillFromDictionary("dtOrderHead","dicCust","Customer","AmountYear")
+F.Data.Dictionary.Close("dicCust")
+
+'Set total orders in last year
+F.Intrinsic.String.Build("Select A.CUSTOMER, COUNT(A.ORDER_NO) From (SELECT * FROM (Select CUSTOMER, ORDER_NO, DATE_ORDER From V_ORDER_HIST_HEAD UNION ALL SELECT CUSTOMER, ORDER_NO, DATE_ORDER FROM V_ORDER_HEADER UNION ALL SELECT CUSTOMER, ORDER_NO, DATE_ORDER FROM V_SHIPMENT_HEADER) A GROUP BY A.CUSTOMER, A.ORDER_NO, A.DATE_ORDER) A WHERE YEAR(A.DATE_ORDER) = {0}-1 GROUP BY A.CUSTOMER;",V.Global.iYear,V.Local.sSQL)
+F.Data.Dictionary.CreateFromSQL("dicCust","conx",V.Local.sSQL,True)
+F.Data.Dictionary.SetDefaultReturn("dicCust",0)
+F.Data.DataTable.FillFromDictionary("dtOrderHead","dicCust","Customer","CountLastYear")
+F.Data.Dictionary.Close("dicCust")
+
+'Set total amount in last year
+F.Intrinsic.String.Build("Select A.CUSTOMER, SUM(A.EXTENSION) From (Select CUSTOMER, EXTENSION, DATE_ORDER From V_ORDER_HIST_LINE UNION ALL SELECT CUSTOMER, (EXTENSION-(QTY_SHIPPED*PRICE)) AS EXTENSION, DATE_ORDER FROM V_ORDER_LINES UNION ALL SELECT CUSTOMER, EXTENSION, DATE_ORDER FROM V_SHIPMENT_LINES) A WHERE YEAR(A.DATE_ORDER) = {0}-1 GROUP BY A.CUSTOMER;",V.Global.iYear,V.Local.sSQL)
+F.Data.Dictionary.CreateFromSQL("dicCust","conx",V.Local.sSQL,True)
+F.Data.Dictionary.SetDefaultReturn("dicCust",0)
+F.Data.DataTable.FillFromDictionary("dtOrderHead","dicCust","Customer","AmountLastYear")
+F.Data.Dictionary.Close("dicCust")
+
+'Set total orders
+F.Data.Dictionary.CreateFromSQL("dicCust","conx","Select A.CUSTOMER, COUNT(A.ORDER_NO) From (SELECT * FROM (Select CUSTOMER, ORDER_NO, DATE_ORDER From V_ORDER_HIST_HEAD UNION ALL SELECT CUSTOMER, ORDER_NO, DATE_ORDER FROM V_ORDER_HEADER UNION ALL SELECT CUSTOMER, ORDER_NO, DATE_ORDER FROM V_SHIPMENT_HEADER) A GROUP BY A.CUSTOMER, A.ORDER_NO, A.DATE_ORDER) A GROUP BY A.CUSTOMER;")
+F.Data.Dictionary.SetDefaultReturn("dicCust",0)
+F.Data.DataTable.FillFromDictionary("dtOrderHead","dicCust","Customer","CountAll")
+F.Data.Dictionary.Close("dicCust")
+
+'Set total amount
+F.Data.Dictionary.CreateFromSQL("dicCust","conx","Select A.CUSTOMER, SUM(A.EXTENSION) From (Select CUSTOMER, EXTENSION, DATE_ORDER From V_ORDER_HIST_LINE UNION ALL SELECT CUSTOMER, (EXTENSION-(QTY_SHIPPED*PRICE)) AS EXTENSION, DATE_ORDER FROM V_ORDER_LINES UNION ALL SELECT CUSTOMER, EXTENSION, DATE_ORDER FROM V_SHIPMENT_LINES) A GROUP BY A.CUSTOMER;")
+F.Data.Dictionary.SetDefaultReturn("dicCust",0)
+F.Data.DataTable.FillFromDictionary("dtOrderHead","dicCust","Customer","AmountAll")
+F.Data.Dictionary.Close("dicCust")
+
+'Get Specific Salesperson and Customer List
+F.Intrinsic.Control.If(V.DataTable.dtSP.Exists,=,True)
+	F.Data.DataTable.Close("dtSP")
+F.Intrinsic.Control.EndIf
+F.Intrinsic.String.Build("select distinct(rtrim(salesman)) as SP from v_order_hist_head where year(date_invoice) = {0} order by salesman",V.Global.iYear,V.Local.sSQL)
+F.Data.DataTable.CreateFromSQL("dtSP","Conx",V.Local.sSQL,True)
+'F.Intrinsic.String.Build("Select Distinct RTrim(Salesperson) As SP,'' As Salesperson,Customer As CustID,Concat(Salesperson,Customer) As SaleCust From V_Order_Hist_Line Where Year(Date_Invoice) = {0} Order By SP,CustID;",V.Local.iYear,V.Local.sSQL)
+'F.Intrinsic.String.Build("Select Distinct(rtrim(customer)+rtrim(salesman)) As SaleCust, RTrim(Salesman) As SP,'' As Salesperson,Customer As CustID From V_Order_Hist_head Where Year(Date_Invoice) = {0} Order By SP,CustID;",V.Local.iYear,V.Local.sSQL)
+F.Intrinsic.String.Build("Select Distinct(rtrim(customer)) As SaleCust, RTrim(Salesperson) As SP,'' As Salesperson,Customer As CustID From V_Order_Hist_Line Where Year(Date_Invoice) = {0} Order By SP,CustID;",V.Global.iYear,V.Local.sSQL)
+F.Data.DataTable.CreateFromSQL("dtOrderHead$dtOrderLine","conx",V.Local.sSQL,True)
+F.Data.DataTable.AddColumn("dtOrderHead$dtOrderLine","Customer","String")
+F.Data.DataTable.AddColumn("dtOrderHead$dtOrderLine","Country","String")
+F.Data.DataTable.AddColumn("dtOrderHead$dtOrderLine","BuyGroup","String")
+F.Data.DataTable.AddColumn("dtOrderHead$dtOrderLine","SIC","String")
+F.Intrinsic.Control.For(V.Local.i1,1,12,1)
+	F.Intrinsic.String.Build("Month{0}",V.Local.i1,V.Local.sFieldName)
+	F.Data.DataTable.AddColumn("dtOrderHead$dtOrderLine",V.Local.sFieldName,"Float")
+F.Intrinsic.Control.Next(V.Local.i1)
+F.Data.DataTable.AddColumn("dtOrderHead$dtOrderLine","Total","Float")
+
+'Set Salesperson Name
+F.Data.Dictionary.CreateFromSQL("dicSP","conx","Select RTrim(ID),RTrim(Name) From V_Salespersons;")
+F.Data.Dictionary.SetDefaultReturn("dicSP","")
+F.Data.DataTable.FillFromDictionary("dtOrderHead$dtOrderLine","dicSP","SP","Salesperson")
+F.Data.Dictionary.Close("dicSP")
+
+'Set Customer Name
+F.Data.Dictionary.CreateFromSQL("dicCust","conx","Select Customer,RTrim(Name_Customer) AS NAME From V_Customer_Master UNION ALL SELECT PROSPECT AS CUSTOMER, NAME_PROSPECT AS NAME FROM V_PROSPECT_MASTER;")
+F.Data.Dictionary.SetDefaultReturn("dicCust","")
+F.Data.DataTable.FillFromDictionary("dtOrderHead$dtOrderLine","dicCust","CustID","Customer")
+F.Data.Dictionary.Close("dicCust")
+
+'Set Country
+F.Data.Dictionary.CreateFromSQL("dicCountry","conx","Select Customer,Country From V_Customer_Master;")
+F.Data.Dictionary.SetDefaultReturn("dicCountry","")
+F.Data.DataTable.FillFromDictionary("dtOrderHead$dtOrderLine","dicCountry","CustID","Country")
+F.Data.Dictionary.Close("dicCountry")
+
+'Set BuyGroup
+F.Data.Dictionary.CreateFromSQL("dicBuyGroup","conx","Select Customer,C_Sort_1 From V_Customer_Sales;")
+F.Data.Dictionary.SetDefaultReturn("dicBuyGroup","")
+F.Data.DataTable.FillFromDictionary("dtOrderHead$dtOrderLine","dicBuyGroup","CustID","BuyGroup")
+F.Data.Dictionary.Close("dicBuyGroup")
+
+'Set SIC
+F.Data.Dictionary.CreateFromSQL("dicSIC","conx","Select Customer,Code_Sic From V_Customer_Sales;")
+F.Data.Dictionary.SetDefaultReturn("dicSIC","")
+F.Data.DataTable.FillFromDictionary("dtOrderHead$dtOrderLine","dicSIC","CustID","SIC")
+F.Data.Dictionary.Close("dicSIC")
+
+'Iterate through every month
+F.Intrinsic.Control.For(V.Local.i1,1,12,1)
+	F.Intrinsic.Math.Sub(V.Local.i1,1,V.Local.iMonth)
+'	F.Intrinsic.String.Build("Analysis by Salesperson and Customer{1}Month: {0}",V.Local.sMonths(V.Local.iMonth),V.Ambient.NewLine,V.Local.sMessage)
+	F.Intrinsic.String.Build("Analysis by Customer{1}Month: {0}",V.Local.sMonths(V.Local.iMonth),V.Ambient.NewLine,V.Local.sMessage)
+	F.Intrinsic.UI.ChangeWaitStatus(V.Local.sMessage,V.Local.i1,1,12)
+	F.Intrinsic.String.Build("Month{0}",V.Local.i1,V.Local.sFieldName)	
+'	F.Intrinsic.String.Build("Select distinct(rtrim(customer)+rtrim(salesperson)) as SaleCust,Sum(Extension) As Extension From V_Order_Hist_Line Where Year(Date_Invoice) = {0} And Month(Date_Invoice) = {1} Group By rtrim(customer)+rtrim(salesperson);",V.Global.iYear,V.Local.i1,V.Local.sSQL)
+	F.Intrinsic.String.Build("Select distinct(rtrim(customer)) as SaleCust,Sum(Extension) As Extension From V_Order_Hist_Line Where Year(Date_Invoice) = {0} And Month(Date_Invoice) = {1} Group By rtrim(customer);",V.Global.iYear,V.Local.i1,V.Local.sSQL)
+	F.Data.Dictionary.CreateFromSQL("dicMonth","conx",V.Local.sSQL)
+	F.Data.Dictionary.SetDefaultReturn("dicMonth",0.00)
+	F.Data.DataTable.FillFromDictionary("dtOrderHead$dtOrderLine","dicMonth","SaleCust",V.Local.sFieldName)
+	F.Data.Dictionary.Close("dicMonth")
+F.Intrinsic.Control.Next(V.Local.i1)
+
+'Set totals
+F.Intrinsic.String.Build("Select distinct(rtrim(customer)) as SaleCust,Sum(Extension) As Extension From V_Order_Hist_Line Where Year(Date_Invoice) = {0} Group By rtrim(customer);",V.Global.iYear,V.Local.sSQL)
+'F.Intrinsic.String.Build("Select Concat(rtrim(Salesperson),rtrim(Customer)) As SaleCust,Sum(Extension) As Extension From V_Order_Hist_Line Where Year(Date_Invoice) = {0} Group By Salesperson,Customer Order By Salesperson,Customer;",V.Local.iYear,V.Local.sSQL)
+F.Data.Dictionary.CreateFromSQL("dicMonth","conx",V.Local.sSQL)
+F.Data.Dictionary.SetDefaultReturn("dicMonth",0.00)
+F.Data.DataTable.FillFromDictionary("dtOrderHead$dtOrderLine","dicMonth","SaleCust","Total")
+F.Data.Dictionary.Close("dicMonth")
+
+F.Data.DataTable.AddRelation("dtOrderHead","Customer","dtOrderHead$dtOrderLine","CustID")
+F.Data.DataView.Create("dtOrderHead","dvOrderHead")
+F.Data.DataView.Create("dtOrderHead$dtOrderLine","dvOrderLine")
+
+'------------------------------------------------CUSTOMER-------------------------------------------------
+Gui.F_SADash.GsGCCustRet.AddGridviewFromDataview("gvHead","dtOrderHead","dvOrderHead")
+Gui.F_SADash.GsGCCustRet.AddGridviewFromDataview("gvLine","dtOrderHead","dvOrderLine")
+Gui.F_SADash.GsGCCustRet.MainView("gvHead")
+
+Gui.F_SADash.GsGCCustRet.SetGridviewProperty("gvHead","OptionsViewShowGroupPanel",True)
+
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","Customer","HeaderHAlignment","Center")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","Name","HeaderHAlignment","Center")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","Days","HeaderHAlignment","Center")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","CountYear","HeaderHAlignment","Center")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","AmountYear","HeaderHAlignment","Center")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","CountLastYear","HeaderHAlignment","Center")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","AmountLastYear","HeaderHAlignment","Center")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","CountAll","HeaderHAlignment","Center")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","AmountAll","HeaderHAlignment","Center")
+
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","Customer","HeaderFontBold",True)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","Name","HeaderFontBold",True)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","Days","HeaderFontBold",True)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","COuntYear","HeaderFontBold",True)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","AmountYear","HeaderFontBold",True)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","COuntLastYear","HeaderFontBold",True)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","AmountLastYear","HeaderFontBold",True)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","COuntAll","HeaderFontBold",True)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","AmountAll","HeaderFontBold",True)
+
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","Customer","Caption","Customer")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","Name","Caption","Name")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","Days","Caption","# of Days Since Last Order")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","CountYear","Caption","Total # of Orders Year-To-Date")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","AmountYear","Caption","Total Amounts Year-To-Date")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","CountLastYear","Caption","Total # of Orders Last Year")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","AmountLastYear","Caption","Total Amounts Last Year")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","CountAll","Caption","Total # of Orders")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","AmountAll","Caption","Total Amounts")
+
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","Customer","MinWidth","120")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","Name","MinWidth","170")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","Days","MinWidth","100")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","CountYear","MinWidth","120")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","AmountYear","MinWidth","120")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","CountLastYear","MinWidth","120")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","AmountLastYear","MinWidth","120")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","CountAll","MinWidth","120")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","AmountAll","MinWidth","120")
+
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","Days","DisplayCustomNumeric","##,###,##0")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","CountYear","DisplayCustomNumeric","##,###,##0")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","AmountYear","DisplayCustomNumeric","##,###,##0.00")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","CountLastYear","DisplayCustomNumeric","##,###,##0")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","AmountLastYear","DisplayCustomNumeric","##,###,##0.00")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","CountAll","DisplayCustomNumeric","##,###,##0")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvHead","AmountAll","DisplayCustomNumeric","##,###,##0.00")
+
+Gui.F_SADash.GsGCCustRet.AddSummaryItem("gvHead","CountYear","","SUM","","","n")
+Gui.F_SADash.GsGCCustRet.AddSummaryItem("gvHead","AmountYear","","SUM","","","n")
+Gui.F_SADash.GsGCCustRet.AddSummaryItem("gvHead","CountLastYear","","SUM","","","n")
+Gui.F_SADash.GsGCCustRet.AddSummaryItem("gvHead","AmountLastYear","","SUM","","","n")
+Gui.F_SADash.GsGCCustRet.AddSummaryItem("gvHead","CountAll","","SUM","","","n")
+Gui.F_SADash.GsGCCustRet.AddSummaryItem("gvHead","AmountAll","","SUM","","","n")
+
+'---------------------------------------------------DETAIL---------------------------------------------------
+
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","SP","Visible",False)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","CustID","Visible",False)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","SaleCust","Visible",False)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","BuyGroup","Visible",False)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","SIC","Visible",False)
+
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Salesperson","HeaderHAlignment","Center")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Customer","HeaderHAlignment","Center")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Total","HeaderHAlignment","Center")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","BuyGroup","HeaderHAlignment","Center")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Country","HeaderHAlignment","Center")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","SIC","HeaderHAlignment","Center")
+
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Salesperson","HeaderFontBold",True)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Customer","HeaderFontBold",True)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Total","HeaderFontBold",True)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","BuyGroup","HeaderFontBold",True)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Country","HeaderFontBold",True)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","SIC","HeaderFontBold",True)
+
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Country","CellHAlignment","Center")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","BuyGroup","CellHAlignment","Center")
+
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Salesperson","MinWidth","120")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Customer","MinWidth","170")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Total","MinWidth","120")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","BuyGroup","MinWidth","80")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Country","MinWidth","100")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Country","MaxWidth","120")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","SIC","MinWidth","80")
+
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Total","DisplayCustomNumeric","##,###,##0.00")
+
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Salesperson","AllowEdit",False)
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Customer","AllowEdit",False)
+
+'Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Salesperson","CellFontUnderline",True)
+'Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Customer","CellFontUnderline",True)
+
+'Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Salesperson","CellForeColor",V.Color.Blue)
+'Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Customer","CellForeColor",V.Color.Blue)
+
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Salesperson","Fixed","Left")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Customer","Fixed","Left")
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","Total","Fixed","Right")
+
+Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine","BuyGroup","Caption","Buy Group")
+
+F.Intrinsic.Control.For(V.Local.i1,1,12,1)
+	F.Intrinsic.Math.Sub(V.Local.i1,1,V.Local.i2)
+	F.Intrinsic.String.Build("Month{0}",V.Local.i1,V.Local.sFieldName)
+	Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine",V.Local.sFieldName,"Caption",V.Local.sMonths(V.Local.i2).Trim)
+	Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine",V.Local.sFieldName,"HeaderHAlignment","Center")
+	Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine",V.Local.sFieldName,"DisplayCustomNumeric","##,###,##0.00")
+	Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine",V.Local.sFieldName,"MinWidth","100")
+	Gui.F_SADash.GsGCCustRet.SetColumnProperty("gvLine",V.Local.sFieldName,"HeaderFontBold",True)
+F.Intrinsic.Control.Next(V.Local.i1)
+
+Gui.F_SADash.GsGCCustRet.SetRowAppearance("gvLine",V.DataTable.dtOrderHead$dtOrderLine.RowCount--,"backcolor",V.Color.SEC-GSS-00)
+Gui.F_SADash.GsGCCustRet.SetRowAppearance("gvLine",V.DataTable.dtOrderHead$dtOrderLine.RowCount--,"fontbold",True)
+
+Program.Sub.LoadGsGCCustRet.End
+
+Program.Sub.LoadGsGCFollowUp.Start
+	V.Local.sError.Declare
+
+	V.Local.sSQL.Declare
+	V.Local.dBegDate.Declare
+	V.Local.dEndDate.Declare
+	V.Local.sPart.Declare
+	V.Local.sActiveFilterString.Declare
+	V.Local.fBreak.Declare
+
+	F.Intrinsic.Control.If(V.DataTable.dtFollowUp.Exists)
+		F.Data.DataTable.Close("dtFollowUp")
+	F.Intrinsic.Control.EndIf
+
+	'Find Opportunity
+
+	F.Intrinsic.String.Build("SELECT OID as ID, COMPID AS CUSTOMER, '' AS NAME, ODESC AS DESCRIPTION, '' as LastUpdate, '0' as Days, OREVENUE AS REVENUE FROM CRM_OPP_MASTER",V.Local.dBegDate.PervasiveDate,V.Local.dEndDate.PervasiveDate,V.Local.fBreak,V.Local.sSQL)
+	F.Data.DataTable.CreateFromSQL("dtFollowUp","conx",V.Local.sSQL,True)
+	
+	'Set Customer Name
+	F.Data.Dictionary.CreateFromSQL("dicCust","conx","Select Customer,RTrim(Name_Customer) AS NAME From V_Customer_Master UNION ALL SELECT PROSPECT AS CUSTOMER, NAME_PROSPECT AS NAME FROM V_PROSPECT_MASTER ;")
+	F.Data.Dictionary.SetDefaultReturn("dicCust","")
+	F.Data.DataTable.FillFromDictionary("dtFollowUp","dicCust","Customer","Name")
+	F.Data.Dictionary.Close("dicCust")
+	
+	'Set Last Update Date
+	F.Data.Dictionary.CreateFromSQL("dicCust","conx","Select Rtrim(M.Meta0) as ID, E.Start_DateTime as LastUpdate From CRM_EVENT_META M Left Join CRM_EVENTS E On M.EID = E.EID")
+	F.Data.Dictionary.SetDefaultReturn("dicCust","")
+	F.Data.DataTable.FillFromDictionary("dtFollowUp","dicCust","ID","LastUpdate")
+	F.Data.Dictionary.Close("dicCust")
+	
+	'Set # of Days
+	F.Intrinsic.String.Build("Select Rtrim(M.Meta0) as ID, '{0}'-Convert(E.Start_DateTime, SQL_Date) as Days From CRM_EVENT_META M Left Join CRM_EVENTS E On M.EID = E.EID",V.Ambient.Date.PervasiveDate,V.Local.sSQL)
+	F.Data.Dictionary.CreateFromSQL("dicCust","conx",V.Local.sSQL)
+	F.Data.Dictionary.SetDefaultReturn("dicCust","N/A")
+	F.Data.DataTable.FillFromDictionary("dtFollowUp","dicCust","ID","Days")
+	F.Data.Dictionary.Close("dicCust")	
+
+	Gui.F_SADash.GsGCFollowUp.AddGridviewFromDatatable("gvFollowUp","dtFollowUp")
+	Gui.F_SADash.GsGCFollowUp.SuspendLayout()
+	Gui.F_SADash.GsGCFollowUp.SetGridViewProperty("gvFollowUp","MultiSelect",True)
+	Gui.F_SADash.GsGCFollowUp.SetGridViewProperty("gvFollowUp","AllowSort",True)
+	Gui.F_SADash.GsGCFollowUp.SetGridViewProperty("gvFollowUp","AllowFilter",True)
+	Gui.F_SADash.GsGCFollowUp.SetGridViewProperty("gvFollowUp","ShowGroupPanel",True)
+	Gui.F_SADash.GsGCFollowUp.SetGridViewProperty("gvFollowUp","EnableAppearanceOddRow",True)
+	Gui.F_SADash.GsGCFollowUp.SetGridViewProperty("gvFollowUp","OptionsViewColumnAutoWidth",False)
+
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","CUSTOMER","Caption","Customer")
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","NAME","Caption","Name")
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","DESCRIPTION","Caption","Description")
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","LastUpdate","Caption","Last Update")
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","DAYS","Caption","# of Days Since Last FU")
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","REVENUE","Caption","Revenue")
+	
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","CUSTOMER","AllowEdit",False)
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","NAME","AllowEdit",False)
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","DESCRIPTION","AllowEdit",False)
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","LastUpdate","AllowEdit",False)
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","DAYS","AllowEdit",False)
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","REVENUE","AllowEdit",False)
+
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","CUSTOMER","ReadOnly",True)
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","NAME","ReadOnly",True)
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","DESCRIPTION","ReadOnly",True)
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","LASTUPDATE","ReadOnly",True)
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","DAYS","ReadOnly",True)	
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","REVENUE","ReadOnly",True)
+
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","CUSTOMER","MinWidth","50")
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","NAME","MinWidth","150")
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","DESCRIPTION","MinWidth","200")
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","LASTUPDATE","MinWidth","200")
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","DAYS","MinWidth","100")
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","REVENUE","MinWidth","200")
+
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","CUSTOMER","HeaderFontBold",True)
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","NAME","HeaderFontBold",True)
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","DESCRIPTION","HeaderFontBold",True)
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","LASTUPDATE","HeaderFontBold",True)
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","DAYS","HeaderFontBold",True)
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","REVENUE","HeaderFontBold",True)
+
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","CUSTOMER","HeaderHAlignment","Center")
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","NAME","HeaderHAlignment","Center")
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","DESCRIPTION","HeaderHAlignment","Center")
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","LASTUPDATE","HeaderHAlignment","Center")
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","DAYS","HeaderHAlignment","Center")
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","REVENUE","HeaderHAlignment","Center")
+
+	Gui.F_SADash.GsGCFollowUp.SetColumnProperty("gvFollowUp","REVENUE","DisplayCustomNumeric","#,###,##0.00####")
+
+	Gui.F_SADash.GsGCFollowUp.AddSummaryItem("gvFollowUp","REVENUE","","SUM","","","n")
+
+	Gui.F_SADash.GsGCFollowUp.ResumeLayout()
+	Gui.F_SADash.GsGCFollowUp.MainView("gvFollowUp")
+
+'----------------------------------------------------PART----------------------------------------------------
+'Gui.F_SADash.GsGCPart.AddGridviewFromDataview("gvPart","dtOrderPart","dvPartHead")
+'Gui.F_SADash.GsGCPart.AddGridviewFromDataview("gvDetail","dtOrderPart","dvPartLine")
+
+'Gui.F_SADash.GsGCPart.MainView("gvPart")
+
+'Gui.F_SADash.GsGCPart.SetGridviewProperty("gvPart","OptionsViewShowGroupPanel",True)
+
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","PartLoc","Visible",False)
+
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Part","HeaderHAlignment","Center")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Loc","HeaderHAlignment","Center")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Description","HeaderHAlignment","Center")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","PL","HeaderHAlignment","Center")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Total","HeaderHAlignment","Center")
+
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Loc","CellHAlignment","Center")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","PL","CellHAlignment","Center")
+
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Part","HeaderFontBold",True)
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Loc","HeaderFontBold",True)
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Description","HeaderFontBold",True)
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","PL","HeaderFontBold",True)
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Total","HeaderFontBold",True)
+
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Part","MinWidth","120")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Loc","MinWidth","40")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Description","MinWidth","200")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","PL","MinWidth","40")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Total","MinWidth","120")
+
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Total","DisplayCustomNumeric","##,###,##0.00")
+
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Part","Fixed","Left")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Loc","Fixed","Left")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","PL","Fixed","Left")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Total","Fixed","Right")
+
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Part","AllowEdit",False)
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","PL","AllowEdit",False)
+
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Part","CellFontUnderline",True)
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","PL","CellFontUnderline",True)
+
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","Part","CellForeColor",V.Color.Blue)
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart","PL","CellForeColor",V.Color.Blue)
+
+'Gui.F_SADash.GsGCPart.SetRowAppearance("gvPart",V.DataTable.dtOrderPart.RowCount--,"backcolor",V.Color.SEC-GSS-00)
+'Gui.F_SADash.GsGCPart.SetRowAppearance("gvPart",V.DataTable.dtOrderPart.RowCount--,"fontbold",True)
+
+'F.Intrinsic.Control.For(V.Local.i1,1,12,1)
+'	F.Intrinsic.Math.Sub(V.Local.i1,1,V.Local.i2)
+'	F.Intrinsic.String.Build("Month{0}",V.Local.i1,V.Local.sFieldName)
+'	Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart",V.Local.sFieldName,"Caption",V.Local.sMonths(V.Local.i2).Trim)
+'	Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart",V.Local.sFieldName,"HeaderHAlignment","Center")
+'	Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart",V.Local.sFieldName,"DisplayCustomNumeric","##,###,##0.00")
+'	Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart",V.Local.sFieldName,"MinWidth","90")
+'	Gui.F_SADash.GsGCPart.SetColumnProperty("gvPart",V.Local.sFieldName,"HeaderFontBold",True)
+'F.Intrinsic.Control.Next(V.Local.i1)
+'----------------------------------------------------PART----------------------------------------------------
+
+'---------------------------------------------------DETAIL---------------------------------------------------
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Part","Visible",False)
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Loc","Visible",False)
+
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Invoice","HeaderHAlignment","Center")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","SO","HeaderHAlignment","Center")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Suffix","HeaderHAlignment","Center")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Customer","HeaderHAlignment","Center")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Quantity","HeaderHAlignment","Center")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Price","HeaderHAlignment","Center")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Extension","HeaderHAlignment","Center")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Month","HeaderHAlignment","Center")
+
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Invoice","CellHAlignment","Center")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","SO","CellHAlignment","Center")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Suffix","CellHAlignment","Center")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Month","CellHAlignment","Center")
+
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Invoice","HeaderFontBold",True)
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","SO","HeaderFontBold",True)
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Suffix","HeaderFontBold",True)
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Customer","HeaderFontBold",True)
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Quantity","HeaderFontBold",True)
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Price","HeaderFontBold",True)
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Extension","HeaderFontBold",True)
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Month","HeaderFontBold",True)
+
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Invoice","MinWidth","80")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","SO","MinWidth","60")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Suffix","MinWidth","50")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Customer","MinWidth","170")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Quantity","MinWidth","70")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Price","MinWidth","80")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Extension","MinWidth","80")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Month","MinWidth","90")
+
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Quantity","DisplayCustomNumeric","##,###,##0.0000")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Price","DisplayCustomNumeric","##,###,##0.00")
+'Gui.F_SADash.GsGCPart.SetColumnProperty("gvDetail","Extension","DisplayCustomNumeric","##,###,##0.00")
+
+'F.Intrinsic.Control.For(V.Local.i1,0,V.DataTable.dtOrderPart$dtDetail.RowCount--,1)
+'	Gui.F_SADash.GsGCPart.SetRowAppearance("gvDetail",V.Local.i1,"backcolor",V.Color.LtGray)
+'F.Intrinsic.Control.Next(V.Local.i1)
+'---------------------------------------------------DETAIL---------------------------------------------------
+Program.Sub.LoadGsGCFollowUp.End
+
+'Program.Sub.GsGCPart_CellClick.Start
+'V.Local.fSum.Declare
+'V.Local.i1.Declare
+'V.Local.i2.Declare
+'V.Local.sArgument.Declare
+'V.Local.sFieldName.Declare
+'V.Local.sFilter.Declare
+'V.Local.sMonths.Declare
+'V.Local.sName.Declare
+'V.Local.sSeries.Declare(String,"")
+'V.Local.sTitle.Declare
+
+'F.Intrinsic.String.Split("January*!*February*!*March*!*April*!*May*!*June*!*July*!*August*!*September*!*October*!*November*!*December","*!*",V.Local.sMonths)
+
+'F.Intrinsic.Control.If(V.Args.Column,=,"Part")
+'	F.Intrinsic.String.Build("Part = '{0}' AND Loc = '{1}'",V.DataTable.dtOrderPart(V.Args.RowIndex).Part!FieldValTrim,V.DataTable.dtOrderPart(V.Args.RowIndex).Loc!FieldValTrim,V.Local.sFilter)
+'	V.Local.sName.Set(V.DataTable.dtOrderPart(V.Args.RowIndex).Part!FieldValTrim)
+'F.Intrinsic.Control.ElseIf(V.Args.Column,=,"PL")
+'	F.Intrinsic.String.Build("PL = '{0}'",V.DataTable.dtOrderPart(V.Args.RowIndex).PL!FieldValTrim,V.Local.sFilter)
+'	V.Local.sName.Set(V.DataTable.dtOrderPart(V.Args.RowIndex).PL!FieldValTrim)
+'F.Intrinsic.Control.EndIf
+
+'Build the series based on filter for every month
+'F.Intrinsic.Control.For(V.Local.i1,1,12,1)
+'	F.Intrinsic.Math.Sub(V.Local.i1,1,V.Local.i2)
+'	F.Intrinsic.String.Build("Month{0}",V.Local.i1,V.Local.sFieldName)
+'	F.Intrinsic.String.Build("SUM({0})",V.Local.sFieldName,V.Local.sArgument)
+'	F.Data.DataTable.Compute("dtOrderPart",V.Local.sArgument,V.Local.sFilter,V.Local.fSum)
+'	F.Intrinsic.Control.If(V.Local.sSeries.Trim,=,"")
+'		F.Intrinsic.String.Build("{0}*!*{1}",V.Local.sMonths(V.Local.i2).Trim,V.Local.fSum,V.Local.sSeries)
+'	F.Intrinsic.Control.Else
+'		F.Intrinsic.String.Build("{2}!*!{0}*!*{1}",V.Local.sMonths(V.Local.i2).Trim,V.Local.fSum,V.Local.sSeries,V.Local.sSeries)
+'	F.Intrinsic.Control.EndIf
+'F.Intrinsic.Control.Next(V.Local.i1)
+
+'Gui.F_SADash.gsChartPart.ClearChart()
+'F.Intrinsic.Control.If(V.DataTable.dtOrderPart(V.Args.RowIndex).Part!FieldValTrim,<>,"GRAND TOTAL")
+'	F.Intrinsic.String.Build("{0}: {1}",V.Args.Column,V.Local.sName,V.Local.sTitle)
+'F.Intrinsic.Control.Else
+'	V.Local.sTitle.Set("GRAND TOTAL")
+'F.Intrinsic.Control.EndIf
+'Gui.F_SADash.gsChartPart.CreateVertBarChart(V.Local.sTitle,V.Local.sName,V.Local.sSeries,False)
+'F.Data.DataTable.Compute("dtOrderPart","SUM(Total)",V.Local.sFilter,V.Local.fSum)
+'F.Intrinsic.String.Format(V.Local.fSum,"#,0.00",V.Local.sTitle)
+'Gui.F_SADash.txtPLTotal.Text(V.Local.sTitle)
+'Program.Sub.GsGCPart_CellClick.End
+
+'Program.Sub.ExportExcel.Start
+'V.Local.sFileExport.Declare
+'V.Local.bExcel.Declare
+'V.Local.bFileLocked.Declare
+'V.Local.sFilePath.Declare
+'V.Local.sMsg.Declare
+
+'F.Automation.MSExcel.CheckPresence(V.Local.bExcel)
+
+'F.Intrinsic.Control.If(V.Screen.F_SADash!optSP.Value,=,False)
+'F.Intrinsic.Control.AndIf(V.Screen.F_SADash!optPL.Value,=,False)
+'	F.Intrinsic.UI.Msgbox("Please select a grid to be exported","Sales Analysis Dashboard (INA)")
+'	F.Intrinsic.Control.ExitSub
+'F.Intrinsic.Control.EndIf
+
+'Display the Save Dialog
+'F.Intrinsic.Control.If(V.Local.bExcel,=,True)
+'	F.Intrinsic.UI.ShowSaveFileDialog("","*.xlsx|",V.Local.sFilePath)
+'F.Intrinsic.Control.Else
+'	F.Intrinsic.UI.ShowSaveFileDialog("","*.csv|",V.Local.sFilePath)
+'F.Intrinsic.Control.EndIf
+
+'F.Intrinsic.Control.If(V.Local.sFilePath,<>,"***CANCEL***")
+'	V.Local.sFileExport.Set(V.Local.sFilePath)
+'	F.Intrinsic.Control.If(V.Local.bExcel,=,True)
+'		F.Intrinsic.String.Concat(V.Local.sFileExport,".xlsx",V.Local.sFileExport)
+'		F.Intrinsic.Control.If(V.Screen.F_SADash!optSP.Value,=,True)
+'			Gui.F_SADash.GsGCSP.Export(V.Local.sFileExport,"xlsx")
+'		F.Intrinsic.Control.ElseIf(V.Screen.F_SADash!optPL.Value,=,True)
+'			Gui.F_SADash.GsGCPart.Export(V.Local.sFileExport,"xlsx")
+'		F.Intrinsic.Control.EndIf
+'	F.Intrinsic.Control.Else
+'		F.Intrinsic.String.Concat(V.Local.sFileExport,".csv",V.Local.sFileExport)
+'		F.Intrinsic.Control.If(V.Screen.F_SADash!optSP.Value,=,True)
+'			Gui.F_SADash.GsGCSP.Export(V.Local.sFileExport,"csv")
+'		F.Intrinsic.Control.ElseIf(V.Screen.F_SADash!optPL.Value,=,True)
+'			Gui.F_SADash.GsGCPart.Export(V.Local.sFileExport,"csv")
+'		F.Intrinsic.Control.EndIf
+'	F.Intrinsic.Control.EndIf
+'	F.Intrinsic.String.Concat("Grid has been exported to ",V.Local.sFileExport,V.Local.sMsg)
+'	F.Intrinsic.UI.Msgbox(V.Local.sMsg)
+'	F.Intrinsic.Task.ShellExec(0,"",V.Local.sFileExport,"","",1)
+'F.Intrinsic.Control.EndIf
+'Program.Sub.ExportExcel.End
+
+Program.Sub.Comments.Start
+${$0$}$$}$MHERTANTO$}$1/3/2017 2:26:55 PM$}$True
+${$3$}$0$}$$}$0$}$-1$}$$}$12:00:00 AM$}$This will allow a user to view all non-approved POs. They can approve one, multiple, or all POs. If the PO has a value greater than the users approval limit, they will not be able to approve that PO.
+${$4$}$0$}$$}$0$}$-1$}$MHERTANTO$}$23/5/2017$}$In subroutine LoadGsGCCustRet, the first query for dtOrderLine was updated and SaleCust was created by F.Data.DataTable.AddExpressionColumn
+${$5$}$2.0.0.0$}$2
+${$6$}$dyunus$}$20200604102029853$}$xZ6SHi8g7O0Qsxe6AiO2NH3PnOKQRy0TSFd97t8/+5oyay2YXUzYtuJ/VxGLeWroP+47UVGIXTA=
+Program.Sub.Comments.End
